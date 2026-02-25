@@ -1,0 +1,2295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sliver Strip Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      crossorigin="anonymous"
+    />
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+
+      :root {
+        --primary: #5a191f;
+        --primary-dark: #3e1016;
+        --primary-mid: #7a2229;
+        --primary-light: #f7eeef;
+        --primary-xlight: #fdf5f5;
+        --accent: #c0202e;
+        --white: #ffffff;
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-400: #9ca3af;
+        --gray-600: #4b5563;
+        --gray-800: #1f2937;
+        --green: #16a34a;
+        --green-light: #dcfce7;
+        --red-light: #fee2e2;
+        --shadow-sm:
+          0 1px 3px rgba(90, 25, 31, 0.08), 0 1px 2px rgba(90, 25, 31, 0.04);
+        --shadow-md: 0 4px 12px rgba(90, 25, 31, 0.1);
+        --shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.14);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      a {
+        text-decoration: none;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--white);
+        color: var(--gray-800);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ─── HEADER ─── */
+      header {
+        background: var(--primary);
+        color: var(--white);
+        height: 80px;
+        padding: 0 1.8rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(90, 25, 31, 0.35);
+        position: relative;
+        z-index: 10;
+        flex-shrink: 0;
+      }
+
+      .logo-icon {
+        margin-right: 15px;
+        width: 150px;
+        height: 50px;
+        background: rgb(255 255 255);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
+
+      .logo-icon img {
+        width: 100%;
+        height: auto;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+      }
+
+      .brand-name {
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+
+      .brand-sub {
+        font-family: "Inter", sans-serif;
+        font-size: 0.58rem;
+        opacity: 0.55;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-top: 1px;
+      }
+
+      .header-pills {
+        display: flex;
+        margin-right: 10px;
+        margin-left: auto;
+      }
+
+      .pill {
+        margin-right: 10px;
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        padding: 5px 13px;
+        font-size: 0.78rem;
+        font-weight: 500;
+      }
+
+      .pill-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.35);
+        flex-shrink: 0;
+        margin-right: 8px;
+      }
+
+      .pill-dot.live {
+        background: #4ade80;
+        box-shadow: 0 0 6px rgba(74, 222, 128, 0.6);
+        animation: blink 2s ease-in-out infinite;
+        margin-right: 8px;
+      }
+
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .pill-lbl {
+        opacity: 0.65;
+        font-size: 0.7rem;
+      }
+
+      .pill-val {
+        font-weight: 600;
+        margin-left: 8px;
+      }
+
+      .hdr-clock {
+        font-family: "Inter", sans-serif;
+        font-size: 0.78rem;
+        opacity: 0.6;
+        margin-left: 0.4rem;
+      }
+
+      /* ─── LAYOUT ─── */
+      .container {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 200px 1fr 250px;
+        min-height: 0;
+      }
+
+      /* ─── SIDEBAR ─── */
+      aside {
+        background: var(--white);
+        border-right: 1px solid var(--gray-200);
+        padding: 1.3rem 0.9rem;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
+      }
+
+      aside.right {
+        border-right: none;
+        border-left: 1px solid var(--gray-200);
+        padding: 1.3rem 1rem;
+      }
+
+      .sec-lbl {
+        font-size: 0.6rem;
+        font-weight: 600;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+        color: var(--gray-400);
+        padding: 0 8px;
+        margin: 10px 0 4px;
+      }
+
+      .sec-lbl:first-child {
+        margin-top: 2px;
+        padding-bottom: 10px;
+      }
+
+      .nav-btn {
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--gray-600);
+        padding: 9px 12px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+
+      .nav-btn i {
+        width: 15px;
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--gray-400);
+        transition: color 0.18s;
+        margin-right: 10px;
+      }
+
+      .nav-btn.active {
+        background: var(--primary-light);
+        border-color: rgba(90, 25, 31, 0.12);
+        color: var(--primary);
+      }
+
+      .nav-btn.active i {
+        color: var(--primary);
+      }
+
+      .nav-btn:hover {
+        background: var(--primary-light);
+        border-color: rgba(90, 25, 31, 0.12);
+        color: var(--primary);
+      }
+
+      .nav-btn:hover i {
+        color: var(--primary);
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--gray-200);
+        margin: 8px 0;
+      }
+
+      /* ─── MAIN ─── */
+      main {
+        background: var(--gray-50);
+        padding: 1.4rem;
+        display: flex;
+        flex-direction: column;
+
+        min-width: 0;
+        /* Critical: prevents grid blowout when flex children want to grow */
+      }
+
+      .feed-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .feed-title {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        text-transform: uppercase;
+        letter-spacing: 0.9px;
+        display: flex;
+        align-items: center;
+      }
+
+      .feed-title i {
+        color: var(--gray-400);
+        font-size: 0.8rem;
+        margin-right: 10px;
+      }
+
+      .badge-row {
+        display: flex;
+      }
+
+      .badge {
+        font-family: "Inter", sans-serif;
+        font-size: 0.63rem;
+        padding: 3px 10px;
+        border-radius: 20px;
+        border: 1px solid var(--gray-200);
+        color: var(--gray-400);
+        background: var(--white);
+        margin-right: 10px;
+      }
+
+      .badge.live-badge {
+        background: var(--green-light);
+        border-color: #86efac;
+        color: var(--green);
+        display: none;
+        align-items: center;
+      }
+
+      .badge.live-badge i {
+        margin-right: 10px;
+      }
+
+      /* Camera wrap */
+      .camera-wrap {
+        background: #1a1a1a;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        /* ─── Key changes ─── */
+        width: 100%;
+        height: 70vh; /* ← main request */
+        min-height: 360px; /* safety minimum on small screens */
+        max-height: 85vh; /* prevent taking absurd space on ultra-tall screens */
+        margin: 0 auto 24px auto; /* better breathing room */
+        display: flex; /* better centering */
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--gray-200);
+      }
+
+      /* Top accent stripe */
+      .camera-wrap::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        z-index: 3;
+        background: linear-gradient(
+          90deg,
+          var(--primary),
+          var(--accent),
+          var(--primary)
+        );
+      }
+
+      /* Corner marks */
+      .cm {
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        z-index: 4;
+        pointer-events: none;
+      }
+
+      .cm::before,
+      .cm::after {
+        content: "";
+        position: absolute;
+        background: var(--accent);
+        opacity: 0.75;
+      }
+
+      .cm.tl {
+        top: 14px;
+        left: 14px;
+      }
+
+      .cm.tl::before {
+        width: 2px;
+        height: 100%;
+        top: 0;
+        left: 0;
+      }
+
+      .cm.tl::after {
+        height: 2px;
+        width: 100%;
+        top: 0;
+        left: 0;
+      }
+
+      .cm.tr {
+        top: 14px;
+        right: 14px;
+      }
+
+      .cm.tr::before {
+        width: 2px;
+        height: 100%;
+        top: 0;
+        right: 0;
+      }
+
+      .cm.tr::after {
+        height: 2px;
+        width: 100%;
+        top: 0;
+        right: 0;
+      }
+
+      .cm.bl {
+        bottom: 14px;
+        left: 14px;
+      }
+
+      .cm.bl::before {
+        width: 2px;
+        height: 100%;
+        bottom: 0;
+        left: 0;
+      }
+
+      .cm.bl::after {
+        height: 2px;
+        width: 100%;
+        bottom: 0;
+        left: 0;
+      }
+
+      .cm.br {
+        bottom: 14px;
+        right: 14px;
+      }
+
+      .cm.br::before {
+        width: 2px;
+        height: 100%;
+        bottom: 0;
+        right: 0;
+      }
+
+      .cm.br::after {
+        height: 2px;
+        width: 100%;
+        bottom: 0;
+        right: 0;
+      }
+
+      .no-feed,
+      #videoFeed {
+        grid-area: 1 / 1 / 2 / 2;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      #videoFeed {
+        display: none; /* controlled by JS */
+        width: auto !important; /* let natural aspect ratio win */
+        height: auto !important;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        background: #000;
+      }
+
+      .no-feed i {
+        font-size: 2.4rem;
+        color: #bfbfbf;
+      }
+
+      .no-feed p {
+        font-family: "Inter", sans-serif;
+        font-size: 0.72rem;
+        letter-spacing: 1px;
+        color: #bfbfbf;
+        margin-top: 10px;
+      }
+
+      .no-feed span {
+        margin-top: 5px;
+        font-size: 0.63rem;
+        opacity: 0.6;
+        color: #bfbfbf;
+      }
+
+      /* ─── METRICS ─── */
+      .metrics-row {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        max-height: 150px;
+        overflow: auto;
+      }
+
+      /* scrollbar width */
+      .metrics-row::-webkit-scrollbar {
+        width: 6px; /* thin */
+      }
+
+      /* track */
+      .metrics-row::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      /* thumb */
+      .metrics-row::-webkit-scrollbar-thumb {
+        background: #7a1818;
+        border-radius: 10px;
+      }
+
+      /* hover */
+      .metrics-row::-webkit-scrollbar-thumb:hover {
+        background: #5c1111;
+      }
+
+      .metric {
+        margin-bottom: 10px;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 10px;
+        padding: 10px;
+        /* box-shadow: var(--shadow-sm); */
+        transition:
+          box-shadow 0.2s,
+          border-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .metric:last-child {
+        margin-right: 0px;
+      }
+
+      .metric:hover {
+        box-shadow: var(--shadow-md);
+        border-color: rgba(90, 25, 31, 0.15);
+      }
+
+      .m-label {
+        font-size: 0.67rem;
+        font-weight: 600;
+        color: var(--gray-400);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 3px;
+      }
+
+      .m-val {
+        font-family: "Inter", sans-serif;
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: var(--gray-800);
+        line-height: 1.05;
+      }
+
+      .m-val.good {
+        color: var(--green);
+      }
+
+      .m-val.bad {
+        color: var(--accent);
+      }
+
+      .m-note {
+        font-size: 0.7rem;
+        color: var(--gray-400);
+        margin-top: 1px;
+      }
+
+      /* ─── RIGHT SIDEBAR ─── */
+      .btn-start {
+        height: 60px;
+        width: 60px;
+        background: var(--primary);
+        color: var(--white);
+        border: 1px solid var(--primary);
+        padding: 10px 14px;
+        border-radius: 30px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        /* box-shadow: 0 3px 10px rgba(90, 25, 31, .28); */
+        margin-bottom: 7px;
+        /* letter-spacing: .2px; */
+      }
+
+      .btn-start:hover {
+        background: white;
+        color: var(--primary);
+        /* box-shadow: 0 5px 16px rgba(90, 25, 31, .38); */
+        transform: translateY(-1px);
+      }
+
+      .btn-start i {
+        font-size: 25px;
+      }
+
+      .btn-stop i {
+        font-size: 25px;
+      }
+
+      .start_stop_flex {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+      }
+
+      .btn-stop {
+        height: 65px;
+        width: 65px;
+        background: var(--red-light);
+        border-color: #fca5a5;
+        border: 1px solid var(--gray-200);
+        padding: 10px 14px;
+        border-radius: 30px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        color: var(--accent);
+      }
+
+      .btn-stop:hover {
+        background: var(--white);
+        color: var(--gray-600);
+      }
+
+      .sel-lbl {
+        font-size: 0.63rem;
+        font-weight: 600;
+        color: var(--gray-400);
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      select.cam-select {
+        width: 100%;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        color: var(--gray-800);
+        padding: 9px 30px 9px 11px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.85rem;
+        border-radius: 8px;
+        cursor: pointer;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        box-shadow: var(--shadow-sm);
+        transition: border-color 0.2s;
+      }
+
+      select.cam-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(90, 25, 31, 0.08);
+      }
+
+      .stat-card {
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        padding: 0.75rem 0.95rem;
+        margin-bottom: 6px;
+      }
+
+      .sc-lbl {
+        font-size: 0.63rem;
+        font-weight: 600;
+        color: var(--gray-400);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+      }
+
+      .sc-val {
+        font-family: "Inter", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--gray-800);
+      }
+
+      .pbar {
+        height: 4px;
+        background: var(--gray-200);
+        border-radius: 4px;
+        margin-top: 6px;
+        overflow: hidden;
+      }
+
+      .pbar-fill {
+        height: 100%;
+        border-radius: 4px;
+        background: var(--primary);
+        transition: width 0.5s ease;
+      }
+
+      .pbar-fill.green {
+        background: var(--green);
+      }
+
+      .log-box {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 8px;
+        padding: 0.6rem 0.75rem;
+        font-family: "Inter", sans-serif;
+        font-size: 0.63rem;
+        color: var(--gray-400);
+        line-height: 1.9;
+        max-height: 118px;
+        overflow-y: auto;
+      }
+
+      /* ─── TOAST ─── */
+      .toast {
+        position: fixed;
+        bottom: 26px;
+        left: 50%;
+        transform: translateX(-50%) translateY(60px);
+        background: var(--primary);
+        color: var(--white);
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(90, 25, 31, 0.32);
+        z-index: 1000;
+        display: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        min-width: 270px;
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* ─── MODAL ─── */
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(31, 41, 55, 0.42);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        backdrop-filter: blur(3px);
+      }
+
+      .modal-box {
+        background: var(--white);
+        border-radius: 14px;
+        width: 460px;
+        max-width: 92%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+      }
+
+      .modal-head {
+        background: var(--primary);
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        align-items: center;
+        color: var(--white);
+      }
+
+      .modal-head i {
+        margin-right: 10px;
+        font-size: 0.95rem;
+        opacity: 0.8;
+      }
+
+      .modal-head-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+
+      .modal-body {
+        padding: 1.5rem;
+      }
+
+      .modal-foot {
+        padding: 0.9rem 1.5rem 1.3rem;
+        display: flex;
+        justify-content: flex-end;
+        margin-right: 10px;
+        border-top: 1px solid var(--gray-100);
+      }
+
+      .modal-foot button {
+        margin-right: 15px;
+      }
+
+      /* Modal Tabs */
+      .modal-tabs {
+        display: flex;
+        border-bottom: 2px solid var(--gray-100);
+        margin: 0 -1.5rem 1.5rem;
+      }
+
+      .modal-tab {
+        flex: 1;
+        padding: 0.875rem 1rem;
+        background: none;
+        border: none;
+        color: var(--gray-600);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s ease;
+      }
+
+      .modal-tab:hover {
+        background: var(--gray-50);
+        color: var(--primary);
+      }
+
+      .modal-tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        font-weight: 600;
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      /* Mode toggle */
+      .mode-toggle {
+        display: flex;
+        background: var(--gray-100);
+        border: 1px solid var(--gray-200);
+        border-radius: 9px;
+        padding: 4px;
+      }
+
+      .mode-toggle input[type="radio"] {
+        display: none;
+      }
+
+      .mode-toggle label {
+        margin-right: 10px;
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--gray-600);
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+      }
+
+      .mode-toggle input[type="radio"]:checked + label {
+        background: var(--primary);
+        color: var(--white);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* Sliders */
+      .slider-block {
+        margin-top: 1.1rem;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .slider-row {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
+      }
+
+      .slider-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .slider-name {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--gray-600);
+        margin-bottom: 10px;
+      }
+
+      .slider-num {
+        width: 58px;
+        text-align: center;
+        border: 1px solid var(--gray-200);
+        border-radius: 6px;
+        padding: 4px 6px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.78rem;
+        color: var(--gray-800);
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .slider-num:focus {
+        border-color: var(--primary);
+      }
+
+      /* Enhanced Range Slider Styling */
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 8px;
+        border-radius: 8px;
+        background: var(--gray-200);
+        /* default empty track color */
+        outline: none;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      /* WebKit browsers (Chrome, Safari, Edge) */
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 8px;
+        border-radius: 8px;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid var(--primary);
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(90, 25, 31, 0.3);
+        margin-top: -7px;
+        /* centers thumb vertically */
+        transition: all 0.2s ease;
+      }
+
+      input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.15);
+        border-color: var(--accent);
+        box-shadow: 0 3px 12px rgba(90, 25, 31, 0.4);
+      }
+
+      /* Firefox */
+      input[type="range"]::-moz-range-track {
+        height: 8px;
+        border-radius: 8px;
+        background: var(--gray-200);
+      }
+
+      input[type="range"]::-moz-range-progress {
+        height: 8px;
+        border-radius: 8px;
+        background: var(--primary);
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid var(--primary);
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(90, 25, 31, 0.3);
+      }
+
+      /* Dynamic fill for WebKit (Chrome/Edge/Safari) */
+      input[type="range"] {
+        background: linear-gradient(
+          to right,
+          var(--primary) 0%,
+          var(--primary) var(--value, 35%),
+          var(--gray-200) var(--value, 35%),
+          var(--gray-200) 100%
+        );
+      }
+
+      /* Hover version */
+      /* input[type="range"]:hover {
+      background: linear-gradient(to right,
+          var(--primary-mid) 0%,
+          var(--primary-mid) var(--value, 35%),
+          var(--gray-300) var(--value, 35%),
+          var(--gray-300) 100%);
+    } */
+
+      /* Buttons */
+      .btn-m {
+        padding: 9px 20px;
+        border: none;
+        border-radius: 8px;
+        font-family: "Inter", sans-serif;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-m.primary {
+        background: var(--primary);
+        color: var(--white);
+        box-shadow: 0 2px 8px rgba(90, 25, 31, 0.22);
+        border: 1px solid var(--primary);
+      }
+
+      .btn-m.primary:hover {
+        background: white;
+        color: var(--primary);
+      }
+
+      .btn-m.ghost {
+        background: var(--gray-100);
+        color: var(--gray-600);
+      }
+
+      .btn-m.ghost:hover {
+        background: var(--gray-200);
+      }
+
+      /* Training done */
+      .done-body {
+        padding: 2rem 1.5rem;
+        text-align: center;
+      }
+
+      .done-icon {
+        width: 58px;
+        height: 58px;
+        background: var(--green-light);
+        border: 3px solid #0fa844;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: var(--green);
+        font-size: 1.4rem;
+      }
+
+      .done-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .done-sub {
+        font-size: 16px;
+        color: var(--gray-400);
+      }
+
+      /* Defects Slider Section */
+      .defects-section {
+        background: white;
+        border-radius: 10px;
+        padding: 1.1rem 1.3rem;
+        border: 1px solid var(--gray-200);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        /* padding-bottom: 50px; */
+        position: relative;
+      }
+
+      .defects-slider {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        min-width: 0;
+        flex-wrap: nowrap;
+        height: 210px;
+        overflow: auto;
+        padding: 8px 4px 12px 4px;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary) var(--gray-100);
+        user-select: none;
+        scroll-snap-type: y mandatory;
+      }
+
+      .defects-slider::-webkit-scrollbar {
+        height: 8px;
+      }
+
+      .defects-slider::-webkit-scrollbar-track {
+        background: var(--gray-100);
+        border-radius: 4px;
+      }
+
+      .defects-slider::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 4px;
+        border: 2px solid var(--gray-100);
+      }
+
+      .defects-slider::-webkit-scrollbar-thumb:hover {
+        background: var(--accent);
+      }
+
+      /* Defect Thumbnail with Snap Scroll */
+      .defect-thumb {
+        flex: 0 0 140px;
+        /* width: 140px; */
+        margin-bottom: 10px;
+        height: 100px;
+        background: #0f0f0f;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        scroll-snap-align: start;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+      }
+
+      .defect-thumb:last-child {
+        margin-bottom: 0;
+      }
+
+      .defect-thumb:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(192, 32, 46, 0.25);
+      }
+
+      .defect-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        background: #111;
+      }
+
+      .defect-thumb::after {
+        content: "DEFECT";
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--accent);
+        color: white;
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+      }
+
+      .defect-empty {
+        color: #6b7280;
+        font-size: 0.9rem;
+        text-align: center;
+        padding: 2.5rem 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+        border: 1px dashed #d1d5db;
+        min-height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+      }
+
+      /* Modal navigation arrows */
+      .defect-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        font-size: 1.4rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.7;
+        transition: all 0.2s;
+        z-index: 10;
+      }
+
+      .defect-nav:hover {
+        background: rgba(192, 32, 46, 0.7);
+        opacity: 1;
+      }
+
+      .defect-nav.prev {
+        left: 16px;
+      }
+
+      .defect-nav.next {
+        right: 16px;
+      }
+
+      .defect-nav:disabled,
+      .defect-nav[hidden] {
+        display: none;
+      }
+
+      /* Enhanced Slider Navigation Arrows */
+      .slider-arrow {
+        position: absolute;
+        bottom: -35%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--primary-dark) 100%
+        );
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 4px 12px rgba(90, 25, 31, 0.3),
+          0 0 0 0 rgba(90, 25, 31, 0.2);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .slider-arrow:hover {
+        background: linear-gradient(135deg, var(--accent) 0%, #d00000 100%);
+        transform: translateY(-50%) scale(1.1);
+        box-shadow:
+          0 6px 20px rgba(192, 32, 46, 0.5),
+          0 0 0 4px rgba(192, 32, 46, 0.15);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .slider-arrow:active {
+        transform: translateY(-50%) scale(0.95);
+        box-shadow: 0 2px 8px rgba(192, 32, 46, 0.4);
+      }
+
+      .slider-arrow.prev {
+        right: 4pc;
+      }
+
+      .slider-arrow.next {
+        right: 1pc;
+      }
+
+      .slider-arrow:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        background: linear-gradient(
+          135deg,
+          var(--gray-400) 0%,
+          var(--gray-600) 100%
+        );
+        pointer-events: none;
+      }
+
+      .slider-arrow:disabled:hover {
+        transform: translateY(-50%) scale(1);
+        box-shadow: 0 4px 12px rgba(90, 25, 31, 0.3);
+      }
+
+      .mtb-3 {
+        margin-bottom: 15px;
+        margin-top: 15px;
+      }
+
+      .btn-m.delete {
+        background-color: red;
+        color: rgb(255, 255, 255);
+        padding: 10px 20px;
+        border: 1px solid #ff0000;
+      }
+
+      .btn-m.delete:hover {
+        background-color: rgb(255, 255, 255);
+        color: red;
+        padding: 10px 20px;
+        border: 1px solid red;
+      }
+
+      .start_name_flex {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .start_name_flex p {
+        font-size: 16px;
+        font-weight: 800;
+        text-transform: uppercase;
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- HEADER -->
+    <header>
+      <div class="logo-icon">
+        <a href="index.html">
+          <img src="img/logo/logo.png" alt="" />
+        </a>
+      </div>
+      <div class="brand">
+        <div class="brand-name">Sliver Strip Detection</div>
+        <div class="brand-sub">Industrial Vision System</div>
+      </div>
+
+      <div class="header-pills">
+        <div class="pill">
+          <span
+            class="pill-dot"
+            id="jobColorDot"
+            style="background: #16a34a"
+          ></span>
+          <span class="pill-lbl">JOB ID</span>
+          <span class="pill-val" id="jobIdLabel">white</span>
+        </div>
+        <div class="pill">
+          <span class="pill-dot live" id="statusDot"></span>
+          <span class="pill-lbl">STATUS</span>
+          <span class="pill-val" id="statusLabel">STANDBY</span>
+        </div>
+        <div class="pill">
+          <span class="pill-lbl">DEFECTS</span>
+          <span class="pill-val" id="hdrDefects">0</span>
+        </div>
+        <div class="pill">
+          <span class="pill-lbl">ACCURACY</span>
+          <span class="pill-val">98.4%</span>
+        </div>
+      </div>
+
+      <div class="hdr-clock" id="clock">--:--:--</div>
+    </header>
+
+    <!-- LAYOUT -->
+    <div class="container">
+      <!-- LEFT SIDEBAR -->
+      <aside class="">
+        <div class="sec-lbl">Menu</div>
+        <a href="index.html" class="nav-btn active">
+          <i class="fa-solid fa-gauge"></i> Dashboard
+        </a>
+        <a href="report.html" class="nav-btn">
+          <i class="fas fa-file-lines"></i> Report
+        </a>
+        <button
+          class="nav-btn"
+          onclick="showToast('Controller panel opening...', 3000)"
+        >
+          <i class="fas fa-sliders"></i> Controller
+        </button>
+        <!-- <button class="nav-btn" onclick="startTraining()">
+        <i class="fas fa-graduation-cap"></i> Training
+      </button> -->
+
+        <a href="traning.html" class="nav-btn">
+          <i class="fas fa-graduation-cap"></i> Training
+        </a>
+        <button class="nav-btn" onclick="openSettings()">
+          <i class="fas fa-gear"></i> Settings
+        </button>
+        <div class="metrics-row">
+          <div class="metric">
+            <div class="m-label">Inspected</div>
+            <div class="m-val" id="inspectedCount">0</div>
+            <!-- <div class="m-note">units today</div> -->
+          </div>
+          <div class="metric">
+            <div class="m-label">Good</div>
+            <div class="m-val good" id="goodCount">0</div>
+            <!-- <div class="m-note">passed</div> -->
+          </div>
+          <div class="metric">
+            <div class="m-label">Defective</div>
+            <div class="m-val bad" id="badCount">0</div>
+            <!-- <div class="m-note">rejected</div> -->
+          </div>
+          <div class="metric">
+            <div class="m-label">Uptime</div>
+            <div class="m-val" id="uptimeVal">0:00</div>
+            <!-- <div class="m-note">this session</div> -->
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main>
+        <div class="feed-bar">
+          <div class="feed-title">
+            <i class="fas fa-video"></i> Live Camera Feed
+          </div>
+          <div class="badge-row">
+            <span class="badge">HD · 1080P</span>
+            <span class="badge live-badge" id="liveBadge">
+              <i class="fas fa-circle" style="font-size: 0.42rem"></i> LIVE
+            </span>
+            <span class="badge">30 FPS</span>
+          </div>
+        </div>
+
+        <div class="camera-wrap">
+          <div class="cm tl"></div>
+          <div class="cm tr"></div>
+          <div class="cm bl"></div>
+          <div class="cm br"></div>
+
+          <div class="no-feed" id="noFeed">
+            <i class="fas fa-video-slash"></i>
+            <p>NO ACTIVE FEED</p>
+            <span>Press START to begin detection</span>
+          </div>
+          <video
+            id="videoFeed"
+            autoplay
+            playsinline
+            muted
+            style="
+              display: none;
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: contain;
+            "
+          ></video>
+        </div>
+
+        <!-- DEFECTS CAROUSEL / SLIDER (below camera-wrap) -->
+
+        <!-- DEFECT DETAIL MODAL with slider -->
+        <div id="defectModal" class="modal">
+          <div
+            class="modal-box"
+            style="width: 86%; max-width: 980px; position: relative"
+          >
+            <div class="modal-head">
+              <i class="fas fa-bug"></i>
+              <div class="modal-head-title">Defect Viewer</div>
+              <div
+                style="margin-left: auto; font-size: 0.9rem; opacity: 0.8"
+                id="defectModalPosition"
+              ></div>
+            </div>
+
+            <div
+              class="modal-body"
+              style="
+                padding: 1rem;
+                text-align: center;
+                background: #0a0a0a;
+                position: relative;
+                min-height: 60vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <!-- Navigation Arrows -->
+              <button
+                id="prevDefect"
+                class="defect-nav prev"
+                onclick="changeDefect(-1)"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <img
+                id="defectModalImage"
+                style="
+                  max-width: 100%;
+                  max-height: 68vh;
+                  border-radius: 8px;
+                  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
+                  object-fit: contain;
+                "
+              />
+
+              <button
+                id="nextDefect"
+                class="defect-nav next"
+                onclick="changeDefect(1)"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+
+            <div
+              class="modal-foot"
+              style="justify-content: center; padding: 1rem 1.5rem"
+            >
+              <button class="btn-m primary" onclick="downloadDefectImage()">
+                <i class="fas fa-download"></i> Save Current Image
+              </button>
+              <button class="btn-m delete">
+                <i class="fa-regular fa-trash-can"></i> Delete
+              </button>
+              <button class="btn-m ghost" onclick="closeDefectModal()">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT SIDEBAR -->
+      <aside class="right">
+        <div class="sec-lbl">Controls</div>
+        <div class="start_stop_flex">
+          <div class="start_name_flex">
+            <button
+              class="btn-start"
+              id="cameraSelect"
+              onclick="startDetection()"
+            >
+              <i class="fas fa-play"></i>
+            </button>
+            <p>start</p>
+          </div>
+          <div class="start_name_flex">
+            <button class="btn-stop" onclick="stopDetection()">
+              <i class="fas fa-stop"></i>
+            </button>
+            <p>stop</p>
+          </div>
+        </div>
+
+        <div class="divider mtb-3"></div>
+        <div class="defects-section">
+          <div class="feed-bar" style="margin-bottom: 0.6rem">
+            <div class="sec-lbl">Defected Images</div>
+            <!-- <div class="badge">Last 10 detections</div> -->
+          </div>
+
+          <div style="position: relative">
+            <!-- <button class="slider-arrow prev" onclick="scrollSlider(-156)"><i class="fa-solid fa-angle-left"></i></button> -->
+
+            <div class="defects-slider" id="defectsSlider">
+              <!-- thumbs here -->
+            </div>
+
+            <!-- <button class="slider-arrow next" onclick="scrollSlider(156)"><i class="fa-solid fa-angle-right"></i></button> -->
+          </div>
+        </div>
+        <!-- <div class="divider"></div> -->
+        <!-- <div class="sec-lbl">Detection Stats</div> -->
+
+        <!-- <div class="stat-card">
+        <div class="sc-lbl">Confidence</div>
+        <div class="sc-val" id="confVal">—</div>
+        <div class="pbar">
+          <div class="pbar-fill green" id="confBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="sc-lbl">Defect Rate</div>
+        <div class="sc-val" id="defectRateVal">0.0%</div>
+        <div class="pbar">
+          <div class="pbar-fill" id="defectBar" style="width:0%"></div>
+        </div>
+      </div> -->
+      </aside>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast"><span id="toastMessage"></span></div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal">
+      <div class="modal-box">
+        <div class="modal-head">
+          <i class="fas fa-gear"></i>
+          <div class="modal-head-title">Detection Settings</div>
+        </div>
+        <div class="modal-body">
+          <!-- Tabs -->
+          <div class="modal-tabs">
+            <button class="modal-tab active" onclick="switchTab('detection')">
+              Detection Mode
+            </button>
+            <button class="modal-tab" onclick="switchTab('threshold')">
+              Threshold
+            </button>
+          </div>
+
+          <!-- Detection Mode Tab Content -->
+          <div id="detectionTab" class="tab-content active">
+            <span class="sel-lbl" style="display: block; margin-bottom: 8px"
+              >Detection Mode</span
+            >
+
+            <div class="mode-toggle">
+              <input
+                type="radio"
+                name="mode"
+                id="modeDefault"
+                value="default"
+                checked
+                onchange="toggleManual()"
+              />
+              <label for="modeDefault">Default</label>
+              <input
+                type="radio"
+                name="mode"
+                id="modeManual"
+                value="manual"
+                onchange="toggleManual()"
+              />
+              <label for="modeManual">Manual</label>
+            </div>
+            <div id="defaultInfo" style="margin: 12px 0 4px">
+              <input
+                type="text"
+                id="currentModeDisplay"
+                value="6.3.1"
+                readonly
+                style="
+                  width: 100%;
+                  padding: 11px 14px;
+                  font-size: 0.95rem;
+                  font-weight: 500;
+                  border: 1px solid rgba(90, 25, 31, 0.25);
+                  border-radius: 8px;
+                  background: #fefefe;
+                  color: var(--primary);
+                  cursor: default;
+                  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+                "
+              />
+
+              <p
+                style="
+                  font-size: 0.74rem;
+                  color: var(--gray-500);
+                  margin-top: 10px;
+                  text-align: center;
+                "
+              >
+                Mode is locked to Default in current system configuration
+              </p>
+            </div>
+            <div id="manualControls" style="display: none">
+              <div class="slider-block">
+                <div class="slider-row">
+                  <div class="slider-top">
+                    <span class="slider-name">Exposure</span>
+                    <input
+                      type="number"
+                      id="lowerValue"
+                      class="slider-num"
+                      value="35"
+                      min="0"
+                      max="100"
+                      oninput="
+                        document.getElementById('lowerSlider').value =
+                          this.value
+                      "
+                    />
+                  </div>
+                  <input
+                    type="range"
+                    id="lowerSlider"
+                    min="0"
+                    max="100"
+                    value="35"
+                    oninput="
+                      document.getElementById('lowerValue').value = this.value
+                    "
+                  />
+                </div>
+                <!-- <div class="slider-row">
+                <div class="slider-top">
+                  <span class="slider-name">Upper Threshold</span>
+                  <input type="number" id="upperValue" class="slider-num" value="75" min="0" max="100"
+                    oninput="document.getElementById('upperSlider').value=this.value">
+                </div>
+                <input type="range" id="upperSlider" min="0" max="100" value="75"
+                  oninput="document.getElementById('upperValue').value=this.value">
+              </div> -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Threshold Tab Content -->
+          <div id="thresholdTab" class="tab-content">
+            <!-- <span class="sel-lbl" style="display:block;margin-bottom:8px;">Threshold Type</span>
+          <select id="thresholdType" class="cam-select" style="margin-bottom: 16px;">
+            <option value="sensitivity">Sensitivity Level</option>
+            <option value="confidence">Confidence Score</option>
+            <option value="custom">Custom Range</option>
+          </select> -->
+
+            <span class="sel-lbl" style="display: block; margin-bottom: 8px"
+              >Threshold Value</span
+            >
+            <input
+              type="number"
+              id="thresholdValue"
+              placeholder="Enter threshold value"
+              style="
+                width: 100%;
+                padding: 11px 14px;
+                font-size: 0.95rem;
+                font-weight: 500;
+                border: 1px solid rgba(90, 25, 31, 0.25);
+                border-radius: 8px;
+                background: #ffffff;
+                color: var(--primary);
+                box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+              "
+              value="75"
+              min="0"
+              max="100"
+            />
+
+            <p
+              style="
+                font-size: 0.74rem;
+                color: var(--gray-500);
+                margin-top: 10px;
+              "
+            >
+              Adjust threshold value to control detection sensitivity. Higher
+              values require more confidence.
+            </p>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-m ghost" onclick="closeSettings()">Cancel</button>
+          <button class="btn-m primary" onclick="saveSettings()">
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAINING MODAL -->
+    <div id="trainingModal" class="modal">
+      <div class="modal-box">
+        <div class="done-body">
+          <div class="done-icon"><i class="fas fa-check"></i></div>
+          <div class="done-title">Training Complete</div>
+          <div class="done-sub">
+            Model trained successfully. Detection accuracy updated.
+          </div>
+        </div>
+        <div
+          class="modal-foot"
+          style="justify-content: center; border-top: 1px solid var(--gray-100)"
+        >
+          <button
+            class="btn-m primary"
+            onclick="
+              document.getElementById('trainingModal').style.display = 'none'
+            "
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ─── Clock ──────────────────────────────────────────────────────────
+      (function tick() {
+        document.getElementById("clock").textContent = new Date()
+          .toTimeString()
+          .slice(0, 8);
+      })();
+      setInterval(() => {
+        document.getElementById("clock").textContent = new Date()
+          .toTimeString()
+          .slice(0, 8);
+      }, 1000);
+
+      // ─── Uptime ─────────────────────────────────────────────────────────
+      let sessionStart = null;
+      let uptimeTimer = null;
+
+      function startUptime() {
+        sessionStart = Date.now();
+        uptimeTimer = setInterval(() => {
+          const s = Math.floor((Date.now() - sessionStart) / 1000);
+          document.getElementById("uptimeVal").textContent =
+            `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+        }, 1000);
+      }
+
+      function stopUptime() {
+        if (uptimeTimer) {
+          clearInterval(uptimeTimer);
+          uptimeTimer = null;
+        }
+      }
+
+      // ─── Log ────────────────────────────────────────────────────────────
+      function addLog(msg) {
+        const box = document.getElementById("logBox");
+        if (!box) return;
+        const time = new Date().toTimeString().slice(0, 8);
+        box.innerHTML += `<div><span style="color:var(--primary);font-weight:600">${time}</span> ${msg}</div>`;
+        box.scrollTop = box.scrollHeight;
+      }
+
+      // ─── SINGLE FIXED SET OF DEFECT IMAGES ──────────────────────────────
+      const FIXED_DEFECT_IMAGES = [
+        "https://placehold.co/640x480/ff4d6d/white?text=EDGE+SLIVER",
+        "https://placehold.co/640x480/ef233c/fff?text=DENT+DEFECT",
+        "https://picsum.photos/seed/metaldefect1/640/480",
+        "https://placehold.co/640x480/c1121f/white?text=SCRATCH+DEFECT",
+        "https://picsum.photos/seed/industrialdefect/640/480",
+        "https://placehold.co/640x480/d00000/fff?text=CRACK+DETECTED",
+      ];
+
+      let defectHistory = [];
+      let currentModalIndex = -1;
+
+      // Initialize with the fixed set (shown on page load)
+      FIXED_DEFECT_IMAGES.forEach((src) => {
+        defectHistory.push({ time: "Sample", src: src, isSample: true });
+      });
+
+      function addDefectImage(imgSrc) {
+        const time = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        defectHistory.unshift({ time, src: imgSrc, isSample: false });
+        if (defectHistory.length > 10) defectHistory.pop();
+        renderDefectThumbs();
+      }
+
+      function renderDefectThumbs() {
+        const container = document.getElementById("defectsSlider");
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (defectHistory.length === 0) {
+          container.innerHTML = `<div class="defect-empty">Waiting for detection to start...</div>`;
+          return;
+        }
+
+        defectHistory.forEach((def, idx) => {
+          const thumb = document.createElement("div");
+          thumb.className = "defect-thumb";
+
+          if (def.isSample) {
+            thumb.style.opacity = "0.78";
+            thumb.style.border = "1px dashed #9ca3af";
+            thumb.innerHTML = `
+            <img src="${def.src}" alt="Sample defect" loading="lazy">
+            `;
+          } else {
+            thumb.innerHTML = `<img src="${def.src}" alt="Defect ${idx + 1}" loading="lazy">`;
+          }
+
+          thumb.onclick = () => openDefectModal(idx);
+          container.appendChild(thumb);
+        });
+      }
+
+      function openDefectModal(index) {
+        currentModalIndex = index;
+        updateModalImage();
+        document.getElementById("defectModal").style.display = "flex";
+      }
+
+      function updateModalImage() {
+        if (
+          currentModalIndex < 0 ||
+          currentModalIndex >= defectHistory.length
+        ) {
+          closeDefectModal();
+          return;
+        }
+        const def = defectHistory[currentModalIndex];
+        document.getElementById("defectModalImage").src = def.src;
+        document.getElementById("defectModalPosition").textContent =
+          `${currentModalIndex + 1} / ${defectHistory.length} — ${def.time}`;
+        document.getElementById("prevDefect").disabled =
+          currentModalIndex === 0;
+        document.getElementById("nextDefect").disabled =
+          currentModalIndex === defectHistory.length - 1;
+      }
+
+      function changeDefect(direction) {
+        currentModalIndex += direction;
+        updateModalImage();
+      }
+
+      function closeDefectModal() {
+        document.getElementById("defectModal").style.display = "none";
+        currentModalIndex = -1;
+      }
+
+      function downloadDefectImage() {
+        if (currentModalIndex < 0 || currentModalIndex >= defectHistory.length)
+          return;
+        const img = document.getElementById("defectModalImage");
+        const a = document.createElement("a");
+        a.href = img.src;
+        a.download = `defect_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.jpg`;
+        a.click();
+      }
+
+      // ─── Detection / Demo Logic ─────────────────────────────────────────
+      let inspected = 0;
+      let good = 0;
+      let bad = 0;
+      let demoDefectInterval = null;
+
+      function startDetection() {
+        const cam = document.getElementById("cameraSelect")?.value || "0";
+
+        fetch("/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ camera: cam }),
+        })
+          .then(() => {
+            _activate();
+            addLog(`Detection started — Camera ${cam}`);
+          })
+          .catch(() => {
+            _activate();
+            addLog("Detection started (demo mode)");
+          });
+      }
+
+      function _activate() {
+        const feed = document.getElementById("videoFeed");
+        if (feed) {
+          feed.src = "/video?t=" + Date.now();
+          feed.style.display = "block";
+        }
+        document.getElementById("noFeed")?.style.setProperty("display", "none");
+        document
+          .getElementById("liveBadge")
+          ?.style.setProperty("display", "inline-flex");
+        document.getElementById("statusLabel").textContent = "ACTIVE";
+        document.getElementById("confVal").textContent = "84%";
+        document.getElementById("confBar").style.width = "84%";
+
+        startUptime();
+
+        // Demo: only update counters — NO NEW IMAGES added to slider
+        demoDefectInterval = setInterval(
+          () => {
+            inspected++;
+
+            if (Math.random() < 0.28) {
+              bad++;
+              addLog(
+                '<span style="color:var(--accent)">⚠ DEFECT DETECTED (demo)</span>',
+              );
+              // If you want to cycle through the same fixed images instead of staying static, uncomment next 2 lines:
+              // const src = FIXED_DEFECT_IMAGES[bad % FIXED_DEFECT_IMAGES.length];
+              // addDefectImage(src);
+            } else {
+              good++;
+            }
+
+            document.getElementById("inspectedCount").textContent = inspected;
+            document.getElementById("goodCount").textContent = good;
+            document.getElementById("badCount").textContent = bad;
+            document.getElementById("hdrDefects").textContent = bad;
+
+            const rate =
+              inspected > 0 ? ((bad / inspected) * 100).toFixed(1) : "0.0";
+            document.getElementById("defectRateVal").textContent = rate + "%";
+            document.getElementById("defectBar").style.width =
+              Math.min(parseFloat(rate) * 5, 100) + "%";
+          },
+          6000 + Math.random() * 9000,
+        );
+      }
+
+      function stopDetection() {
+        fetch("/stop", { method: "POST" }).finally(_deactivate);
+      }
+
+      function _deactivate() {
+        const feed = document.getElementById("videoFeed");
+        if (feed) {
+          feed.style.display = "none";
+          feed.src = "";
+        }
+        document.getElementById("noFeed")?.style.setProperty("display", "flex");
+        document
+          .getElementById("liveBadge")
+          ?.style.setProperty("display", "none");
+        document.getElementById("statusLabel").textContent = "STANDBY";
+        document.getElementById("confVal").textContent = "—";
+        document.getElementById("confBar").style.width = "0%";
+
+        stopUptime();
+        addLog("Detection stopped.");
+
+        if (demoDefectInterval) {
+          clearInterval(demoDefectInterval);
+          demoDefectInterval = null;
+        }
+      }
+
+      // ─── Toast ──────────────────────────────────────────────────────────
+      function showToast(msg, ms = 3500) {
+        const t = document.getElementById("toast");
+        if (!t) return;
+        document.getElementById("toastMessage").textContent = msg;
+        t.style.display = "block";
+        requestAnimationFrame(() => t.classList.add("show"));
+        setTimeout(() => {
+          t.classList.remove("show");
+          setTimeout(() => (t.style.display = "none"), 300);
+        }, ms);
+      }
+
+      // ─── Training ───────────────────────────────────────────────────────
+      function startTraining() {
+        showToast("Training in progress — please wait ~20 seconds", 7000);
+        addLog("Training started...");
+        setTimeout(() => {
+          document.getElementById("trainingModal").style.display = "flex";
+          addLog("Training complete.");
+        }, 20000);
+      }
+
+      // ─── Settings ───────────────────────────────────────────────────────
+      function openSettings() {
+        document.getElementById("settingsModal").style.display = "flex";
+        document.getElementById("modeDefault").checked = true;
+        toggleManual();
+      }
+
+      function closeSettings() {
+        document.getElementById("settingsModal").style.display = "none";
+      }
+
+      function toggleManual() {
+        const isManual =
+          document.querySelector('input[name="mode"]:checked')?.value ===
+          "manual";
+        document.getElementById("manualControls").style.display = isManual
+          ? "block"
+          : "none";
+        document.getElementById("defaultInfo").style.display = isManual
+          ? "none"
+          : "block";
+      }
+
+      function saveSettings() {
+        closeSettings();
+        showToast("Settings saved successfully");
+        addLog("Settings updated.");
+      }
+
+      function switchTab(tabName) {
+        document
+          .querySelectorAll(".modal-tab")
+          .forEach((tab) => tab.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((content) => content.classList.remove("active"));
+
+        if (tabName === "detection") {
+          document
+            .querySelector(".modal-tab:first-child")
+            .classList.add("active");
+          document.getElementById("detectionTab").classList.add("active");
+        } else if (tabName === "threshold") {
+          document
+            .querySelector(".modal-tab:last-child")
+            .classList.add("active");
+          document.getElementById("thresholdTab").classList.add("active");
+        }
+      }
+
+      document.getElementById("defectModal")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeDefectModal();
+      });
+      document
+        .getElementById("settingsModal")
+        ?.addEventListener("click", (e) => {
+          if (e.target === e.currentTarget) closeSettings();
+        });
+
+      // ─── Slider drag scrolling ──────────────────────────────────────────
+      const slider = document.getElementById("defectsSlider");
+      let isDown = false,
+        startX,
+        scrollLeft;
+
+      slider.addEventListener("mousedown", (e) => {
+        isDown = true;
+        slider.classList.add("active");
+        startX = e.pageX - slider.offsetLeft;
+        scrollLeft = slider.scrollLeft;
+      });
+
+      slider.addEventListener("mouseleave", () => {
+        isDown = false;
+        slider.classList.remove("active");
+      });
+      slider.addEventListener("mouseup", () => {
+        isDown = false;
+        slider.classList.remove("active");
+      });
+
+      slider.addEventListener("mousemove", (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - slider.offsetLeft;
+        const walk = (x - startX) * 1.8;
+        slider.scrollLeft = scrollLeft - walk;
+      });
+
+      function scrollSlider(amount) {
+        const slider = document.getElementById("defectsSlider");
+        if (slider) slider.scrollBy({ left: amount, behavior: "smooth" });
+      }
+
+      // ─── Initial render ─────────────────────────────────────────────────
+      renderDefectThumbs();
+      // Make range sliders show dynamic fill color
+      document.querySelectorAll('input[type="range"]').forEach((slider) => {
+        // Initial update
+        updateRangeFill(slider);
+
+        // Update on every change
+        slider.addEventListener("input", () => {
+          updateRangeFill(slider);
+        });
+
+        // Optional: also update when number input changes (if you have linked number field)
+        const numberInput = document.getElementById(
+          slider.id.replace("Slider", "Value"),
+        );
+        if (numberInput) {
+          numberInput.addEventListener("input", () => {
+            slider.value = numberInput.value;
+            updateRangeFill(slider);
+          });
+        }
+      });
+
+      function updateRangeFill(slider) {
+        const percentage =
+          ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+        slider.style.setProperty("--value", percentage + "%");
+      }
+      // ─── Real Camera Switching (Laptop vs USB) ──────────────────────────────────
+      let currentStream = null;
+
+      // Map your dropdown values to camera preferences
+      // 0 = prefer built-in (laptop), 1 = prefer external/USB
+      const cameraPreference = {
+        0: "user", // facingMode: "user" → built-in laptop camera
+        1: "environment", // facingMode: "environment" → external/USB camera (most common)
+      };
+
+      async function startDetection() {
+        const selectedValue = document.getElementById("cameraSelect").value;
+
+        // Stop any previous stream cleanly
+        if (currentStream) {
+          currentStream.getTracks().forEach((track) => track.stop());
+          currentStream = null;
+        }
+
+        try {
+          // Choose facingMode based on selection
+          const facingMode = cameraPreference[selectedValue] || "user";
+
+          const constraints = {
+            video: {
+              facingMode: facingMode,
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+            audio: false,
+          };
+
+          // Request camera access
+          currentStream =
+            await navigator.mediaDevices.getUserMedia(constraints);
+
+          const videoEl = document.getElementById("videoFeed");
+          videoEl.srcObject = currentStream;
+          videoEl.play().catch((e) => console.warn("Video play failed:", e));
+          videoEl.style.display = "block";
+
+          document.getElementById("noFeed").style.display = "none";
+          document.getElementById("liveBadge").style.display = "inline-flex";
+          document.getElementById("statusLabel").textContent = "ACTIVE";
+
+          startUptime();
+          addLog(
+            `Detection started — ${selectedValue === "1" ? "USB Camera" : "Laptop Camera"}`,
+          );
+
+          // Keep your demo counters running (optional)
+          // demoDefectInterval = setInterval(.... your existing demo code ....);
+        } catch (err) {
+          console.error("Camera error:", err);
+          addLog("Failed to open camera: " + err.message);
+          showToast(
+            "Cannot access camera. Please check permissions or connection.",
+            5000,
+          );
+        }
+      }
+
+      function _deactivate() {
+        if (currentStream) {
+          currentStream.getTracks().forEach((track) => track.stop());
+          currentStream = null;
+        }
+
+        const videoEl = document.getElementById("videoFeed");
+        if (videoEl) {
+          videoEl.srcObject = null;
+          videoEl.style.display = "none";
+        }
+
+        document.getElementById("noFeed").style.display = "flex";
+        document.getElementById("liveBadge").style.display = "none";
+        document.getElementById("statusLabel").textContent = "STANDBY";
+
+        stopUptime();
+        addLog("Detection stopped.");
+
+        if (demoDefectInterval) {
+          clearInterval(demoDefectInterval);
+          demoDefectInterval = null;
+        }
+      }
+
+      // ─── Make sure stop button calls the right deactivate ───────────────────────
+      function stopDetection() {
+        // Remove the old fetch if you don't need backend stop anymore
+        // fetch('/stop', { method: 'POST' }).finally(_deactivate);
+        _deactivate();
+      }
+    </script>
+  </body>
+</html>
