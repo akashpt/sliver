@@ -9,6 +9,53 @@ setInterval(() => {
     .toTimeString()
     .slice(0, 8);
 }, 1000);
+// ================= BRIDGE CONNECTION =================
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Setup bridge connection
+    new QWebChannel(qt.webChannelTransport, function(channel) {
+        window.bridge = channel.objects.bridge;
+
+         bridge.frame_signal.connect(function(imageData) {
+        const img = document.getElementById("video");
+        if (img) {
+            img.src = "data:image/jpeg;base64," + imageData;
+        }
+      });
+    });
+
+    const btnStart = document.getElementById("btnStart");
+    const btnStop = document.getElementById("btnStop");
+
+    if (btnStart) {
+        btnStart.addEventListener("click", function () {
+
+            if (!window.bridge) return;
+
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+
+            bridge.startCamera();
+        });
+    }
+
+    if (btnStop) {
+        btnStop.addEventListener("click", function () {
+
+            if (!window.bridge) return;
+
+            btnStop.disabled = true;
+            btnStart.disabled = false;
+
+            bridge.stopCamera();
+        });
+    }
+
+});
+
+
+
+
 
 // ─── Uptime ─────────────────────────────────────────────────────────
 let sessionStart = null;

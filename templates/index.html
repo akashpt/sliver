@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="stylesheet" href="../static/css/all.min.css" />
     <link rel="stylesheet" href="../static/css/style.css" />
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
   </head>
   <body>
     <!-- HEADER -->
@@ -57,9 +58,9 @@
         <a href="index.html" class="nav-btn active">
           <i class="fa-solid fa-gauge"></i> Dashboard
         </a>
-        <a href="report.html" class="nav-btn">
+        <div  class="nav-btn"  onclick="bridge.goReport()">
           <i class="fas fa-file-lines"></i> Report
-        </a>
+        </div>
         <button
           class="nav-btn"
           onclick="showToast('Controller panel opening...', 3000)"
